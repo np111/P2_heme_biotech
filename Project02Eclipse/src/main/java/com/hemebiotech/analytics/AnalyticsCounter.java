@@ -1,15 +1,13 @@
 package com.hemebiotech.analytics;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class AnalyticsCounter {
@@ -17,14 +15,8 @@ public class AnalyticsCounter {
         Map<String, Integer> symptomsCounts = new HashMap<>();
 
         // read symptoms.txt line by line
-        try (BufferedReader rd = new BufferedReader(
-                new InputStreamReader(new FileInputStream("symptoms.txt"), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = rd.readLine()) != null) {
-                // count symptoms occurrences
-                symptomsCounts.merge(line, 1, Integer::sum);
-            }
-        }
+        List<String> symptoms = new FileSymptomReader("symptoms.txt").getSymptoms();
+        symptoms.forEach(symptom -> symptomsCounts.merge(symptom, 1, Integer::sum));
 
         // write symptoms.txt
         try (Writer wr = new BufferedWriter(
