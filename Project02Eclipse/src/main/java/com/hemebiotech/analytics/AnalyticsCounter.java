@@ -1,43 +1,59 @@
 package com.hemebiotech.analytics;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 public class AnalyticsCounter {
-    public static void main(String[] args) throws Exception {
-        Map<String, Integer> symptomsCounts = new HashMap<>();
+    private static final String IN_FILE = "symptoms.txt";
+    private static final String OUT_FILE = "result.out";
 
-        // read symptoms.txt line by line
-        try (BufferedReader rd = new BufferedReader(
-                new InputStreamReader(new FileInputStream("symptoms.txt"), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = rd.readLine()) != null) {
-                // count symptoms occurrences
-                symptomsCounts.merge(line, 1, Integer::sum);
-            }
+    public static void main(String[] args) {
+        try {
+            run();
+        } catch (CliException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace(System.err);
+            System.exit(1);
+        } catch (Throwable t) {
+            System.err.println("An unhandled error occurred!");
+            t.printStackTrace(System.err);
+            System.exit(1);
+        }
+    }
+
+    private static void run() throws CliException {
+        // read symptoms.txt
+        System.out.println("Reading \"" + IN_FILE + "\"...");
+        List<String> symptoms;
+        try {
+            symptoms = new FileSymptomReader("symptoms.txt").getSymptoms();
+        } catch (Exception e) {
+            throw new CliException("An error occurred while reading the symptoms list.", e);
         }
 
-        // write symptoms.txt
-        try (Writer wr = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream("result.out"), StandardCharsets.UTF_8))) {
-            // sort symptoms alphabetically
-            Iterator<Map.Entry<String, Integer>> it = symptomsCounts.entrySet()
-                    .stream().sorted(Map.Entry.comparingByKey()).iterator();
+        // count symptoms
+        System.out.println("Counting symptoms occurrences...");
+        SymptomsCounter counter = new SymptomsCounter();
+        counter.add(symptoms);
 
-            // write line by line
-            while (it.hasNext()) {
-                Map.Entry<String, Integer> e = it.next();
-                wr.write(e.getKey() + ": " + e.getValue() + "\n");
-            }
+        // write symptoms.txt
+        System.out.println("Writing \"" + OUT_FILE + "\"...");
+        try (SymptomsWriter wr = new SymptomsWriter(new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(OUT_FILE), StandardCharsets.UTF_8)))) {
+            wr.writeCount(counter.getCount());
+        } catch (Exception e) {
+            throw new CliException("An error occurred while writing the result file.", e);
+        }
+
+        System.out.println("Done!");
+    }
+
+    private static class CliException extends Exception {
+        public CliException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
