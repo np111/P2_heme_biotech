@@ -1,59 +1,115 @@
 package com.hemebiotech.analytics;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Callable;
+import lombok.Data;
+import picocli.CommandLine;
 
-public class AnalyticsCounter {
-    private static final String IN_FILE = "symptoms.txt";
-    private static final String OUT_FILE = "result.out";
+@CommandLine.Command(
+        name = "analytics-counter",
+        description = "Count symptoms occurrences.",
+        mixinStandardHelpOptions = true
+)
+@Data
+public class AnalyticsCounter implements Callable<Integer> {
+    private static final String DEFAULT_SOURCE = "symptoms.txt";
+    private static final String DEFAULT_DEST = "result.out";
 
     public static void main(String[] args) {
-        try {
-            run();
-        } catch (CliException e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace(System.err);
-            System.exit(1);
-        } catch (Throwable t) {
-            System.err.println("An unhandled error occurred!");
-            t.printStackTrace(System.err);
-            System.exit(1);
-        }
+        int exitCode = new CommandLine(new AnalyticsCounter()).execute(args);
+        System.exit(exitCode);
     }
 
-    private static void run() throws CliException {
+    @CommandLine.Parameters(index = "0", paramLabel = "[SOURCE]", defaultValue = DEFAULT_SOURCE,
+            description = "The symptoms file to read.")
+    private String source;
+
+    @CommandLine.Parameters(index = "1", paramLabel = "[DEST]", defaultValue = DEFAULT_DEST,
+            description = "The file to write the results to.")
+    private String dest;
+
+    /**
+     * Run the program.
+     *
+     * @return the exit code (0 for success)
+     */
+    @Override
+    public Integer call() {
         // read symptoms.txt
-        System.out.println("Reading \"" + IN_FILE + "\"...");
+        printInfo("Reading symptoms...");
         List<String> symptoms;
         try {
-            symptoms = new FileSymptomReader("symptoms.txt").getSymptoms();
+            ISymptomReader symptomReader = createSymptomReader();
+            symptoms = symptomReader.getSymptoms();
         } catch (Exception e) {
-            throw new CliException("An error occurred while reading the symptoms list.", e);
+            printError("An error occurred while reading the symptoms list:", e);
+            return 1;
         }
 
         // count symptoms
-        System.out.println("Counting symptoms occurrences...");
+        printInfo("Counting symptoms occurrences...");
         SymptomsCounter counter = new SymptomsCounter();
         counter.add(symptoms);
 
         // write symptoms.txt
-        System.out.println("Writing \"" + OUT_FILE + "\"...");
+        printInfo("Writing results...");
         try (SymptomsWriter wr = new SymptomsWriter(new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(OUT_FILE), StandardCharsets.UTF_8)))) {
+                new OutputStreamWriter(createOutputStream(), StandardCharsets.UTF_8)))) {
             wr.writeCount(counter.getCount());
         } catch (Exception e) {
-            throw new CliException("An error occurred while writing the result file.", e);
+            printError("An error occurred while writing the result file:", e);
+            return 1;
         }
 
-        System.out.println("Done!");
+        printInfo("Done!");
+        return 0;
     }
 
-    private static class CliException extends Exception {
-        public CliException(String message, Throwable cause) {
-            super(message, cause);
+    /**
+     * Create the symptom reader to be used by the program.
+     */
+    private ISymptomReader createSymptomReader() throws IOException {
+        return new FileSymptomReader(source);
+    }
+
+    /**
+     * Create the results output stream to be used by the program.
+     */
+    private OutputStream createOutputStream() throws IOException {
+        return new FileOutputStream(dest);
+    }
+
+    /**
+     * Print an informative message from the program.
+     */
+    private void printInfo(String message) {
+        // Note: info is printed to stderr to keep stdout clean (for an eventual result on it)
+        System.err.println(message);
+    }
+
+    /**
+     * Print an error message from the program.
+     *
+     * @param message   the message
+     * @param exception the error cause (or null if none)
+     */
+    private void printError(String message, Exception exception) {
+        if (exception instanceof FileNotFoundException) {
+            // don't print the stacktrace for FileNotFoundException, the message is enough
+            message += " " + exception.getMessage();
+            exception = null;
+        }
+
+        System.err.println(message);
+        if (exception != null) {
+            exception.printStackTrace(System.err);
         }
     }
 }
