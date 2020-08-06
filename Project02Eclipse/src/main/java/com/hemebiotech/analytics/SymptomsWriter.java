@@ -4,6 +4,8 @@ import java.io.FilterWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
+import java.util.stream.Stream;
+import lombok.SneakyThrows;
 
 /**
  * A {@link Writer} for symptoms lists.
@@ -23,21 +25,17 @@ public final class SymptomsWriter extends FilterWriter {
     public void writeCount(Map<String, Integer> symptomsCount) throws IOException {
         symptomsCount.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> {
-                    String symptom = e.getKey();
-                    int count = e.getValue();
-                    try {
-                        out.write(symptom + ": " + count + "\n");
-                    } catch (IOException ex) {
-                        sneakyThrow(ex);
-                    }
-                });
+                .forEach(this::writeEach);
     }
 
-    /*
-     * A bit of magic for unchecked lambdas. See: https://www.baeldung.com/java-sneaky-throws
+    /**
+     * {@link SneakyThrows} is used to allow usage of this method with {@link Stream#forEach}. But the calling method
+     * MUST catch or throws the suppressed {@link IOException}!
      */
-    private static <E extends Throwable> void sneakyThrow(Throwable e) throws E {
-        throw (E) e;
+    @SneakyThrows
+    private void writeEach(Map.Entry<String, Integer> symptomsCountEntry) {
+        String symptom = symptomsCountEntry.getKey();
+        int count = symptomsCountEntry.getValue();
+        out.write(symptom + ": " + count + "\n");
     }
 }
