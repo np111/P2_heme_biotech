@@ -21,6 +21,7 @@ import picocli.CommandLine;
 public class AnalyticsCounter implements Callable<Integer> {
     private static final String DEFAULT_SOURCE = "symptoms.txt";
     private static final String DEFAULT_DEST = "result.out";
+    private static final String STDIO_PATH = "-";
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new AnalyticsCounter()).execute(args);
@@ -76,6 +77,9 @@ public class AnalyticsCounter implements Callable<Integer> {
      * Create the symptom reader to be used by the program.
      */
     private ISymptomReader createSymptomReader() throws IOException {
+        if (STDIO_PATH.equals(source)) {
+            return new InputStreamSymptomReader(System.in);
+        }
         return new FileSymptomReader(source);
     }
 
@@ -83,6 +87,9 @@ public class AnalyticsCounter implements Callable<Integer> {
      * Create the results output stream to be used by the program.
      */
     private OutputStream createOutputStream() throws IOException {
+        if (STDIO_PATH.equals(dest)) {
+            return System.out;
+        }
         return new FileOutputStream(dest);
     }
 
