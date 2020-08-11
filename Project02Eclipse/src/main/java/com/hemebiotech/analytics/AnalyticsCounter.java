@@ -1,5 +1,8 @@
 package com.hemebiotech.analytics;
 
+import com.hemebiotech.analytics.reader.FileSymptomReader;
+import com.hemebiotech.analytics.reader.ISymptomReader;
+import com.hemebiotech.analytics.reader.InputStreamSymptomReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
