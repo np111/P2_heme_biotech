@@ -25,6 +25,8 @@ public class AnalyticsCounter implements Callable<Integer> {
     private static final String DEFAULT_SOURCE = "symptoms.txt";
     private static final String DEFAULT_DEST = "result.out";
     private static final String STDIO_PATH = "-";
+    private static final int EXIT_SUCCESS = 0;
+    private static final int EXIT_FAILURE = 1;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new AnalyticsCounter()).execute(args);
@@ -54,7 +56,7 @@ public class AnalyticsCounter implements Callable<Integer> {
             symptoms = symptomReader.getSymptoms();
         } catch (Exception e) {
             printError("An error occurred while reading the symptoms list:", e);
-            return 1;
+            return EXIT_FAILURE;
         }
 
         // count symptoms
@@ -69,11 +71,11 @@ public class AnalyticsCounter implements Callable<Integer> {
             wr.writeCount(counter.getCount());
         } catch (Exception e) {
             printError("An error occurred while writing the result file:", e);
-            return 1;
+            return EXIT_FAILURE;
         }
 
         printInfo("Done!");
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     /**
