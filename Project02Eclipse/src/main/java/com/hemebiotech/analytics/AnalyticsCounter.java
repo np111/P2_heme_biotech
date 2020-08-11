@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import lombok.Data;
 import picocli.CommandLine;
+import picocli.CommandLine.Help.Visibility;
 
 @CommandLine.Command(
         name = "analytics-counter",
@@ -33,12 +34,16 @@ public class AnalyticsCounter implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    @CommandLine.Parameters(index = "0", paramLabel = "[SOURCE]", defaultValue = DEFAULT_SOURCE,
-            description = "The symptoms file to read.")
+    @CommandLine.Parameters(index = "0", paramLabel = "[SOURCE]",
+            defaultValue = DEFAULT_SOURCE, showDefaultValue = Visibility.NEVER,
+            description = "The symptoms file to read (default: " + DEFAULT_SOURCE + ").\n"
+                    + "Use - to read from the standard input.")
     private String source;
 
-    @CommandLine.Parameters(index = "1", paramLabel = "[DEST]", defaultValue = DEFAULT_DEST,
-            description = "The file to write the results to.")
+    @CommandLine.Parameters(index = "1", paramLabel = "[DEST]",
+            defaultValue = DEFAULT_DEST, showDefaultValue = Visibility.NEVER,
+            description = "The file to write the results to (default: " + DEFAULT_DEST + ").\n"
+                    + "Use - to write to the standard output.")
     private String dest;
 
     /**
