@@ -10,8 +10,8 @@ import lombok.SneakyThrows;
 /**
  * A {@link Writer} for symptoms lists.
  */
-public final class SymptomsWriter extends FilterWriter {
-    public SymptomsWriter(Writer writer) {
+public final class SymptomWriter extends FilterWriter {
+    public SymptomWriter(Writer writer) {
         super(writer);
     }
 
