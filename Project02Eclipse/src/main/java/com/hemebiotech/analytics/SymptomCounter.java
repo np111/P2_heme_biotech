@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * An aggregator that counts the number of occurrences per symptom.
  */
-public class SymptomsCounter {
+public class SymptomCounter {
     private final Map<String, Integer> count = new HashMap<>();
 
     /**

@@ -1,5 +1,8 @@
 package com.hemebiotech.analytics;
 
+import com.hemebiotech.analytics.reader.FileSymptomReader;
+import com.hemebiotech.analytics.reader.ISymptomReader;
+import com.hemebiotech.analytics.reader.InputStreamSymptomReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import lombok.Data;
 import picocli.CommandLine;
+import picocli.CommandLine.Help.Visibility;
 
 @CommandLine.Command(
         name = "analytics-counter",
@@ -22,18 +26,24 @@ public class AnalyticsCounter implements Callable<Integer> {
     private static final String DEFAULT_SOURCE = "symptoms.txt";
     private static final String DEFAULT_DEST = "result.out";
     private static final String STDIO_PATH = "-";
+    private static final int EXIT_SUCCESS = 0;
+    private static final int EXIT_FAILURE = 1;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new AnalyticsCounter()).execute(args);
         System.exit(exitCode);
     }
 
-    @CommandLine.Parameters(index = "0", paramLabel = "[SOURCE]", defaultValue = DEFAULT_SOURCE,
-            description = "The symptoms file to read.")
+    @CommandLine.Parameters(index = "0", paramLabel = "[SOURCE]",
+            defaultValue = DEFAULT_SOURCE, showDefaultValue = Visibility.NEVER,
+            description = "The symptoms file to read (default: " + DEFAULT_SOURCE + ").\n"
+                    + "Use - to read from the standard input.")
     private String source;
 
-    @CommandLine.Parameters(index = "1", paramLabel = "[DEST]", defaultValue = DEFAULT_DEST,
-            description = "The file to write the results to.")
+    @CommandLine.Parameters(index = "1", paramLabel = "[DEST]",
+            defaultValue = DEFAULT_DEST, showDefaultValue = Visibility.NEVER,
+            description = "The file to write the results to (default: " + DEFAULT_DEST + ").\n"
+                    + "Use - to write to the standard output.")
     private String dest;
 
     /**
@@ -51,26 +61,26 @@ public class AnalyticsCounter implements Callable<Integer> {
             symptoms = symptomReader.getSymptoms();
         } catch (Exception e) {
             printError("An error occurred while reading the symptoms list:", e);
-            return 1;
+            return EXIT_FAILURE;
         }
 
         // count symptoms
         printInfo("Counting symptoms occurrences...");
-        SymptomsCounter counter = new SymptomsCounter();
+        SymptomCounter counter = new SymptomCounter();
         counter.add(symptoms);
 
         // write symptoms.txt
         printInfo("Writing results...");
-        try (SymptomsWriter wr = new SymptomsWriter(new BufferedWriter(
+        try (SymptomWriter wr = new SymptomWriter(new BufferedWriter(
                 new OutputStreamWriter(createOutputStream(), StandardCharsets.UTF_8)))) {
             wr.writeCount(counter.getCount());
         } catch (Exception e) {
             printError("An error occurred while writing the result file:", e);
-            return 1;
+            return EXIT_FAILURE;
         }
 
         printInfo("Done!");
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     /**
