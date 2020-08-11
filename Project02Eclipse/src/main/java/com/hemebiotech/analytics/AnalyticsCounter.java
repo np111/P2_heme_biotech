@@ -59,12 +59,12 @@ public class AnalyticsCounter implements Callable<Integer> {
 
         // count symptoms
         printInfo("Counting symptoms occurrences...");
-        SymptomsCounter counter = new SymptomsCounter();
+        SymptomCounter counter = new SymptomCounter();
         counter.add(symptoms);
 
         // write symptoms.txt
         printInfo("Writing results...");
-        try (SymptomsWriter wr = new SymptomsWriter(new BufferedWriter(
+        try (SymptomWriter wr = new SymptomWriter(new BufferedWriter(
                 new OutputStreamWriter(createOutputStream(), StandardCharsets.UTF_8)))) {
             wr.writeCount(counter.getCount());
         } catch (Exception e) {
