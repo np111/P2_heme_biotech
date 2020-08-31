@@ -29,3 +29,5 @@ You can compile the final jar by running: `mvn package`
 ## Notes
 
 This is a school project (for OpenClassrooms).
+
+You can read the requested work report here: [Work Report / Compte-rendu du travail effectué \[PDF\] \[FR\]](https://github.com/np111/P2_heme_biotech/issues/1)
